@@ -1,54 +1,29 @@
 #include "avl-tree-mk2.h"
 
-Element::Element(int val, int pos)
+Tree::Tree(int n)
 {
-    value = val;
-    position = pos;
-}
-
-std::ostream& operator<<(std::ostream& out, Element e)
-{
-    out << e.value;
-    return out;
-}
-
-bool operator<(const Element& l, const Element& r) // нужен для std::sort
-{
-    return l.value < r.value;
-}
-
-bool operator==(const Element& l, const Element& r) // для multiset::find
-{
-    return l.value == r.value;
-}
-
-AvlTree::AvlTree(int n)
-{
-    sequence.resize(n);
     std::default_random_engine generator(std::chrono::system_clock::now().time_since_epoch().count());
     for (int i = 0; i < n; ++i)
-        sequence[i] = data.insert(Element(generator() % (MAXVALUE - MINVALUE) + MINVALUE, sequence.size()));
+        sequence.push_back(data.insert(generator() % (MAXVALUE - MINVALUE) + MINVALUE));
 }
 
-AvlTree::AvlTree(std::initializer_list<int> args)
+Tree::Tree(std::initializer_list<int> args)
 {
-    int i = 0;
-    sequence.resize(args.size());
     for (auto it = args.begin(); it != args.end(); ++it) 
-        sequence[i++] = data.insert(Element(*it, sequence.size()));
+        sequence.push_back(data.insert(*it));
 }
 
-void AvlTree::insert(int val, int pos) 
+void Tree::insert(int val, int pos) 
 {
     if (pos > sequence.size())
         pos = sequence.size();
     sequence.resize(sequence.size() + 1);
     for (int i = sequence.size(); i > pos ; --i)
         sequence[i] = sequence[i-1];
-    sequence[pos] = data.insert(Element(val, pos));
+    sequence[pos] = data.insert(val);
 }
 
-void AvlTree::erase(int pos)
+void Tree::erase(int pos)
 {
     if (pos > sequence.size())
         return;
@@ -58,14 +33,14 @@ void AvlTree::erase(int pos)
     sequence.resize(sequence.size() - 1);
 }
 
-std::multiset<Element>::iterator AvlTree::find(int val)
+std::multiset<int>::iterator Tree::find(int val) const
 {
-    return data.find(Element(val, 0));
+    return data.find(val);
 }
 
-AvlTree& AvlTree::operator|(AvlTree& t)
+Tree& Tree::operator|(const Tree& t)
 {
-    std::multiset<Element> result;
+    std::multiset<int> result;
     std::set_union(this->data.begin(), this->data.end(), t.data.begin(), t.data.end(), std::inserter(result, result.end()));
     data = result;
     sequence.clear();
@@ -74,9 +49,9 @@ AvlTree& AvlTree::operator|(AvlTree& t)
     return *this;
 }
 
-AvlTree& AvlTree::operator&(AvlTree& t)
+Tree& Tree::operator&(const Tree& t)
 {
-    std::multiset<Element> result;
+    std::multiset<int> result;
     std::set_intersection(this->data.begin(), this->data.end(), t.data.begin(), t.data.end(), std::inserter(result, result.end()));
     data = result;
     sequence.clear();
@@ -85,9 +60,9 @@ AvlTree& AvlTree::operator&(AvlTree& t)
     return *this;
 }
 
-AvlTree& AvlTree::operator/(AvlTree& t)
+Tree& Tree::operator/(const Tree& t)
 {
-    std::multiset<Element> result;
+    std::multiset<int> result;
     std::set_difference(this->data.begin(), this->data.end(), t.data.begin(), t.data.end(), std::inserter(result, result.end()));
     data = result;
     sequence.clear();
@@ -96,58 +71,52 @@ AvlTree& AvlTree::operator/(AvlTree& t)
     return *this;
 }
 
-std::ostream& operator<<(std::ostream& out, AvlTree& t)
+std::ostream& operator<<(std::ostream& out, Tree& t)
 {
     out << "{ ";
    for (auto it = t.sequence.begin(); it != t.sequence.end(); ++it)
-       out << **it << ' ';
+       out << **it << " ";
     out << "} \n";
    return out;
 }
 
-bool comparator(std::multiset<Element>::iterator l, std::multiset<Element>::iterator r) 
+bool comparator(std::multiset<int>::iterator l, std::multiset<int>::iterator r) 
 {
-    return l->value < r->value;
+    return *l < *r;
 }
 
-void AvlTree::merge(AvlTree& t) // O(n*log(n))
+void Tree::merge(Tree& t) 
 {  
-    std::sort(sequence.begin(), sequence.end(), comparator);
-    std::sort(t.sequence.begin(), t.sequence.end(), comparator); // изменяет правую последовательность. нехорошо.
-    
-    std::multiset<Element> result;
-    std::merge(*(sequence.begin()), *(sequence.end()), 
-                *(t.sequence.begin()), *(t.sequence.end()), 
-                std::inserter(result, result.end())); // хрень какая-то. проверить
+    std::multiset<int> result;
+    std::merge(data.begin(), data.end(), 
+                t.data.begin(), t.data.end(), 
+                std::inserter(result, result.end())); //  сложность?
     data = result;
     sequence.clear();
     for(auto it = data.begin(); it != data.end(); ++it) 
-        sequence.push_back(it);
+        sequence.push_back(it);    
 }
 
-void AvlTree::subst(AvlTree& t, int pos) // O(n*log(n))
-{ // нагло врет. поправить
+void Tree::subst(Tree& t, int pos) // O(n*log(n))
+{ 
     if (pos > sequence.size())
         pos = sequence.size();
     
-    // новый размер последовательности
-    sequence.resize(sequence.size() + t.sequence.size() - pos);
+    // новый размер последовательности = сумме двух входных. (c)кэп
+    sequence.resize(sequence.size() + t.sequence.size());
     
     // перестановка элементов с позиции pos на t.sequence.size() ячеек вправо
     for (auto it = sequence.end(); it != sequence.begin() + pos; --it)
         *it = *(it - t.sequence.size());
     
     // вставка элементов из t
-    int i = 0;
-    for (auto it = t.sequence.begin() + pos; it != t.sequence.end(); ++it)
-        sequence[pos + i++] = data.insert(Element((**it).value, pos + i ));
+    int i = pos;
+    for (auto it = t.sequence.begin(); it != t.sequence.end(); ++it)
+        sequence[i++] = data.insert(**it );
 }
 
-void AvlTree::change(AvlTree& t, int pos) //  O(n*log(n)) в худшем
-{                                         // можно сделать линейную в среднем, но лень 
-    
-    // падает -___-
-    
+void Tree::change(Tree& t, int pos) //  O(n*log(n)) в худшем
+{                                  // можно сделать линейную в среднем, но лень 
     // проверка слишком большого pos 
     if (pos > sequence.size())
         pos = sequence.size();
@@ -157,11 +126,12 @@ void AvlTree::change(AvlTree& t, int pos) //  O(n*log(n)) в худшем
         sequence.resize(t.sequence.size() + pos);
     
     //  замена, пока не прошли левую, а потом вставка в конец левой
-    int i = 0;
-    for (auto it = t.sequence.begin(); it != t.sequence.end(); ++it, ++i)
+    int i = pos;
+    for (auto it = t.sequence.begin(); it != t.sequence.end(); ++it)
     {
         if (pos+i < sequence.size())
-            data.erase(sequence[pos+i]);
-        sequence[pos + i] = data.insert(Element( (**it).value, pos + i));  
+            data.erase(sequence[i]);
+        sequence[i] = data.insert(**it);
+        ++i;
     }
 }

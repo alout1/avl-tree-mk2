@@ -2,12 +2,17 @@
 
 int main(int argc, char** argv) {
 
-    AvlTree t({1,2,3,3,4,9}), k({3,4,5,1, 9, 9});
-    t.insert(4, 0);
-    t.erase(2);
-    std::cout << t << k;
+    Tree t({1,2,3,4,5}), k({7,8,9}), p({0,0,0,0,0});
+    std::cout << t << k << p;
     
-    std::cout << t ;
+    t.merge(k);
+    std::cout <<'\n' << t ;
+    
+    t.subst(k, 0);
+    std::cout << t;
+    
+    t.change(p, 3);
+    std::cout <<t;
     return 0;
 }
 
