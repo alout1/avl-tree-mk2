@@ -80,11 +80,6 @@ std::ostream& operator<<(std::ostream& out, Tree& t)
    return out;
 }
 
-bool comparator(std::multiset<int>::iterator l, std::multiset<int>::iterator r) 
-{
-    return *l < *r;
-}
-
 void Tree::merge(Tree& t) 
 {  
     std::multiset<int> result;
