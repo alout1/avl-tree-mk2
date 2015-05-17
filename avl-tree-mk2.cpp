@@ -60,7 +60,7 @@ Tree& Tree::operator&(const Tree& t)
     return *this;
 }
 
-Tree& Tree::operator/(const Tree& t)
+Tree& Tree::operator/(const Tree& t) //
 {
     std::multiset<int> result;
     std::set_difference(this->data.begin(), this->data.end(), t.data.begin(), t.data.end(), std::inserter(result, result.end()));
@@ -80,19 +80,20 @@ std::ostream& operator<<(std::ostream& out, Tree& t)
    return out;
 }
 
-void Tree::merge(Tree& t) 
+Tree& Tree::merge(Tree& t) 
 {  
     std::multiset<int> result;
     std::merge(data.begin(), data.end(), 
                 t.data.begin(), t.data.end(), 
-                std::inserter(result, result.end())); //  сложность?
+                std::inserter(result, result.end())); 
     data = result;
     sequence.clear();
     for(auto it = data.begin(); it != data.end(); ++it) 
-        sequence.push_back(it);    
+        sequence.push_back(it);   
+    return *this;
 }
 
-void Tree::subst(Tree& t, int pos) // O(n*log(n))
+Tree& Tree::subst(Tree& t, int pos) // O(n*log(n))
 { 
     if (pos > sequence.size())
         pos = sequence.size();
@@ -108,9 +109,10 @@ void Tree::subst(Tree& t, int pos) // O(n*log(n))
     int i = pos;
     for (auto it = t.sequence.begin(); it != t.sequence.end(); ++it)
         sequence[i++] = data.insert(**it );
+    return *this;
 }
 
-void Tree::change(Tree& t, int pos) //  O(n*log(n)) в худшем
+Tree& Tree::change(Tree& t, int pos) //  O(n*log(n)) в худшем
 {                                  // можно сделать линейную в среднем, но лень 
     // проверка слишком большого pos 
     if (pos > sequence.size())
@@ -129,4 +131,5 @@ void Tree::change(Tree& t, int pos) //  O(n*log(n)) в худшем
         sequence[i] = data.insert(**it);
         ++i;
     }
+    return *this;
 }

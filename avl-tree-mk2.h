@@ -34,9 +34,9 @@ public:
     Tree& operator/(const Tree& t);    //    \  вычитание
     
     // функции для последовательностей: слияние, подстановка, замена
-    void merge(Tree& t);
-    void subst(Tree& t, int pos);
-    void change(Tree& t, int pos); 
+    Tree& merge(Tree& t);
+    Tree& subst(Tree& t, int pos);
+    Tree& change(Tree& t, int pos); 
     
 
 private:
